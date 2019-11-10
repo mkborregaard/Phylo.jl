@@ -299,7 +299,9 @@ julia> @enum TemperatureTrait lowTempPref midTempPref highTempPref
 
 julia> rand(SymmetricDiscreteTrait(tree, TemperatureTrait, 0.4));
 
-julia> plot(tree, line_z = Int.(getnodedata.(tree, traversal(tree, postorder), "TemperatureTrait")))
+julia> sort!(tree) #sorts branches by number of descendants
+
+julia> plot(tree, line_z = Int.(getnodedata.(tree, traversal(tree, postorder), "TemperatureTrait")), treetype = :fan)
 
 julia> d = DataFrame(nodename=getnodename.(tree, traversal(tree, preorder)), trait=getnodedata.(tree, traversal(tree, preorder), "TemperatureTrait"))
 199×2 DataFrame
