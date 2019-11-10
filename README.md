@@ -273,8 +273,6 @@ julia> rand(BrownianTrait(tree, "Trait"))  # Defaults to starting at 0.0, varian
 LinkTree{OneRoot,String,LinkNode{OneRoot,String,Dict{String,Any},LinkBranch{OneRoot,String,Dict{String,Any},Float64}},LinkBranch{OneRoot,String,Dict{String,Any},Float64},Dict{String,Any}} with 100 tips, 199 nodes and 198 branches.
 Leaf names are tip 21, tip 81, tip 32, tip 12, tip 51, ... [94 omitted] ... and tip 93
 
-julia> plot(tree, line_z = getnodedata.(tree, traversal(tree, postorder), "Trait"))
-
 julia> d = DataFrame(nodename=getnodename.(tree, traversal(tree, preorder)), trait=getnodedata.(tree, traversal(tree, preorder), "Trait"))
 199×2 DataFrame
 │ Row │ nodename │ trait     │
@@ -291,7 +289,10 @@ julia> d = DataFrame(nodename=getnodename.(tree, traversal(tree, preorder)), tra
 │ 197 │ tip 79   │ 0.218236  │
 │ 198 │ tip 40   │ 0.745802  │
 │ 199 │ tip 81   │ -0.408055 │
+
+julia> plot(tree, line_z = getnodedata.(tree, traversal(tree, preorder), "Trait"), size = (800, 700))
 ```
+![tree1](https://user-images.githubusercontent.com/8429802/68552226-dce3e000-0414-11ea-8599-946a49c72d01.png)
 
 Then a discrete trait:
 ```julia
@@ -300,8 +301,6 @@ julia> @enum TemperatureTrait lowTempPref midTempPref highTempPref
 julia> rand(SymmetricDiscreteTrait(tree, TemperatureTrait, 0.4));
 
 julia> sort!(tree) #sorts branches by number of descendants
-
-julia> plot(tree, line_z = Int.(getnodedata.(tree, traversal(tree, postorder), "TemperatureTrait")), treetype = :fan)
 
 julia> d = DataFrame(nodename=getnodename.(tree, traversal(tree, preorder)), trait=getnodedata.(tree, traversal(tree, preorder), "TemperatureTrait"))
 199×2 DataFrame
@@ -319,7 +318,10 @@ julia> d = DataFrame(nodename=getnodename.(tree, traversal(tree, preorder)), tra
 │ 197 │ tip 79   │ midTempPref  │
 │ 198 │ tip 40   │ lowTempPref  │
 │ 199 │ tip 81   │ highTempPref │
+
+julia> plot(tree, line_z = Int.(getnodedata.(tree, traversal(tree, preorder), "TemperatureTrait")), treetype = :fan)
 ```
+![tree2](https://user-images.githubusercontent.com/8429802/68552246-13b9f600-0415-11ea-93d2-b67fe29fbb79.png)
 
 [docs-latest-img]: https://img.shields.io/badge/docs-latest-blue.svg
 [docs-latest-url]: https://richardreeve.github.io/Phylo.jl/latest
