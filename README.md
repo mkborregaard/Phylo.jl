@@ -189,6 +189,20 @@ Dict{String,Any} with 1 entry:
   "lnP" => 1.0
 ```
 
+### Plotting
+
+There are plot recipes for use with the Plots package, and you can use the standard Plots interface to customize trees. A `showtips` argument controls whether to show tips, and a `treetype` argument, which can be either `:dendrogram` (the default) or `:fan` controls the shape of the tree.
+
+```julia
+julia> using Plots, Phylo
+julia> hummers = open(parsenewick, "hummingbirds_tree.txt") #from McGuire et al. 2014
+LinkTree{OneRoot,String,LinkNode{OneRoot,String,Dict{String,Any},LinkBranch{OneRoot,String,Dict{String,Any},Float64}},LinkBranch{OneRoot,String,Dict{String,Any},Float64},Dict{String,Any}} with 126 tips, 251 nodes and 250 branches.
+Leaf names are Florisuga_mellivora, Phaethornis_hispidus, Phaethornis_bourcieri, Phaethornis_anthophilus, Phaethornis_griseogularis, ... [120 omitted] ... and Patagona_gigas
+
+julia> plot(hummers, treetype = :fan, lc = :black)
+```
+![skaermbillede 2018-09-11 kl 14 48 39](https://user-images.githubusercontent.com/8429802/45362580-7f1bf400-b5d5-11e8-8263-d877b6e09f9b.png)
+
 ### R interface
 
 And while we wait for me (or kind [contributors][pr-url]!) to fill out
@@ -265,32 +279,25 @@ discrete. First a continuous trait:
 ```julia
 julia> using Phylo, Plots, DataFrames
 
-julia> tree = rand(Nonultrametric(100)) # Defaults to mean tree depth of 1.0
+# using the hummers tree from above
+julia> rand(BrownianTrait(hummers, "Trait"))  # Defaults to starting at 0.0, variance 1.0
 LinkTree{OneRoot,String,LinkNode{OneRoot,String,Dict{String,Any},LinkBranch{OneRoot,String,Dict{String,Any},Float64}},LinkBranch{OneRoot,String,Dict{String,Any},Float64},Dict{String,Any}} with 100 tips, 199 nodes and 198 branches.
 Leaf names are tip 21, tip 81, tip 32, tip 12, tip 51, ... [94 omitted] ... and tip 93
 
-julia> rand(BrownianTrait(tree, "Trait"))  # Defaults to starting at 0.0, variance 1.0
-LinkTree{OneRoot,String,LinkNode{OneRoot,String,Dict{String,Any},LinkBranch{OneRoot,String,Dict{String,Any},Float64}},LinkBranch{OneRoot,String,Dict{String,Any},Float64},Dict{String,Any}} with 100 tips, 199 nodes and 198 branches.
-Leaf names are tip 21, tip 81, tip 32, tip 12, tip 51, ... [94 omitted] ... and tip 93
-
-julia> d = DataFrame(nodename=getnodename.(tree, traversal(tree, preorder)), trait=getnodedata.(tree, traversal(tree, preorder), "Trait"))
-199×2 DataFrame
-│ Row │ nodename │ trait     │
-│     │ String   │ Float64   │
-├─────┼──────────┼───────────┤
-│ 1   │ Node 199 │ 0.0       │
-│ 2   │ Node 198 │ -0.517593 │
-│ 3   │ Node 197 │ -0.314101 │
-│ 4   │ Node 172 │ -0.391149 │
-│ 5   │ Node 164 │ -0.797994 │
+julia> d = DataFrame(nodename=getnodename.(hummers, traversal(hummers, preorder)), trait=getnodedata.(hummers, traversal(hummers, preorder), "Trait"))
+251×2 DataFrame
+│ Row │ nodename                 │ trait     │
+│     │ String                   │ Float64   │
+├─────┼──────────────────────────┼───────────┤
+│ 1   │ Node 251                 │ 0.0       │
+│ 2   │ Florisuga_mellivora      │ -0.129941 │
 ⋮
-│ 195 │ tip 67   │ -0.21145  │
-│ 196 │ Node 125 │ 0.236189  │
-│ 197 │ tip 79   │ 0.218236  │
-│ 198 │ tip 40   │ 0.745802  │
-│ 199 │ tip 81   │ -0.408055 │
+│ 249 │ Myrtis_fanny             │ -0.624411 │
+│ 250 │ Heliomaster_longirostris │ 0.0812924 │
+│ 251 │ Patagona_gigas           │ -0.67172  │
 
-julia> plot(tree, line_z = getnodedata.(tree, traversal(tree, preorder), "Trait"), size = (800, 700))
+julia> sort!(hummers) #sorts the branches by number of descendants
+julia> plot(hummers, line_z = "Trait", lw = 4, treetype = :fan, showtips = false, color = :RdYlBu)
 ```
 ![tree1](https://user-images.githubusercontent.com/8429802/68552226-dce3e000-0414-11ea-8599-946a49c72d01.png)
 
@@ -298,9 +305,11 @@ Then a discrete trait:
 ```julia
 julia> @enum TemperatureTrait lowTempPref midTempPref highTempPref
 
-julia> rand(SymmetricDiscreteTrait(tree, TemperatureTrait, 0.4));
+julia> tree = rand(Nonultrametric(100)) # Defaults to mean tree depth of 1.0
+LinkTree{OneRoot,String,LinkNode{OneRoot,String,Dict{String,Any},LinkBranch{OneRoot,String,Dict{String,Any},Float64}},LinkBranch{OneRoot,String,Dict{String,Any},Float64},Dict{String,Any}} with 100 tips, 199 nodes and 198 branches.
+Leaf names are tip 21, tip 81, tip 32, tip 12, tip 51, ... [94 omitted] ... and tip 93
 
-julia> sort!(tree) #sorts branches by number of descendants
+julia> rand(SymmetricDiscreteTrait(tree, TemperatureTrait, 0.4));
 
 julia> d = DataFrame(nodename=getnodename.(tree, traversal(tree, preorder)), trait=getnodedata.(tree, traversal(tree, preorder), "TemperatureTrait"))
 199×2 DataFrame
@@ -319,7 +328,7 @@ julia> d = DataFrame(nodename=getnodename.(tree, traversal(tree, preorder)), tra
 │ 198 │ tip 40   │ lowTempPref  │
 │ 199 │ tip 81   │ highTempPref │
 
-julia> plot(tree, line_z = Int.(getnodedata.(tree, traversal(tree, preorder), "TemperatureTrait")), treetype = :fan)
+julia> plot(tree, marker_z = Int.(getnodedata.(tree, traversal(tree, preorder), "TemperatureTrait")), lc = :black, msc = :white, c = cgrad([:blue, :green, :red]), colorbar = false)
 ```
 ![tree2](https://user-images.githubusercontent.com/8429802/68552246-13b9f600-0415-11ea-93d2-b67fe29fbb79.png)
 
